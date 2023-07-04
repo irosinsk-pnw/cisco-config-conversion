@@ -1,3 +1,6 @@
+# Takes an Enterasys EOS configuration file and creates a Cisco configuration for each VLAN.
+# Input the EOS config by pasting it on the CLI and pressing Ctrl+D at the end,
+# or redirect it like `python vlans-en-to-cisco.py < config.txt`
 import re, sys
 
 oldVlanConfig = sys.stdin.readlines()

@@ -1,6 +1,6 @@
 # Takes an Extreme EXOS configuration file and creates a Cisco configuration for each switchport.
 # Input the EXOS config by pasting it on the CLI and pressing Ctrl+D at the end,
-# or redirect it like `python extreme-to-cisco-ports.py < config.txt`
+# or redirect it like `python ports-ex-to-cisco.py < config.txt`
 import sys, re
 
 originalConfig = sys.stdin.readlines()
