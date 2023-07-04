@@ -79,5 +79,3 @@ for port in aliases:
                     print(f"  switchport trunk vlan {vlanTag}")
 
 print()
-
-
