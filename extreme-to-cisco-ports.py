@@ -1,18 +1,12 @@
+# Takes an Extreme EXOS configuration file and creates a Cisco configuration for each switchport.
+# Input the EXOS config by pasting it on the CLI and pressing Ctrl+D at the end,
+# or redirect it like `python extreme-to-cisco-ports.py < config.txt`
 import sys, re
 
-if len(sys.argv) != 2:
-    print("Usage: `python extreme-to-cisco-ports.py <filename>`")
-    print("where <filename> is the original switch's configuration file")
-    sys.exit(1)
+originalConfig = sys.stdin.readlines()
+print()
 
-# Read the input file
-try:
-    originalConfig = open(sys.argv[1], "r").readlines()
-except FileNotFoundError:
-    print(f"File {sys.argv[1]} not found.")
-    sys.exit(1)
-
-aliases = {}      # Display string of each port
+aliases = {}    # Display string of each port
 vlanTags = {}   # Tag number of each VLAN
 untagged = {}   # Each port's untagged VLAN
 tagged = {}     # Array of each port's tagged VLANs
@@ -70,20 +64,20 @@ for line in originalConfig:
                     tagged[port].append(match.group("name"))
 
 # Print the new configuration
-portNum = 1
-switch = 1
 for port in aliases:
+    (switch, dummy, portNum) = port.partition(":")
     print(f"interface GigabitEthernet{switch}/0/{portNum}")
     print(f"  description {aliases[port]}")
-    if (vlan := untagged.get(port)) is not None:
-        print(f"  switchport access vlan {vlanTags[vlan]}")
+    if (vlanTag := vlanTags.get(untagged.get(port))) is not None:
+        print(f"  switchport access vlan {vlanTag}")
     if (vlanList := tagged.get(port)) is not None:
-        for vlan in vlanList:
-            print(f"  switchport voice vlan {vlanTags[vlan]}")
+        for vlanName in vlanList:
+            if (vlanTag := vlanTags.get(vlanName)) is not None:
+                if "voip" in vlanName.lower():
+                    print(f"  switchport voice vlan {vlanTag}")
+                else:
+                    print(f"  switchport trunk vlan {vlanTag}")
 
-    if portNum == 48:   # Need to transfer to the next switch
-        portNum = 1
-        switch += 1
-    else:
-        portNum += 1
+print()
+
 
