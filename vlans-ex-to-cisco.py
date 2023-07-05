@@ -20,4 +20,4 @@ print()
 print("VLAN tag list:")
 for i in range(len(vlanList)-1):
     print(vlanList[i],end=",")
-print(vlanList[len(vlanList)-1)
+print(vlanList[len(vlanList)-1])
