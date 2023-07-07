@@ -3,11 +3,12 @@
 # or redirect it like `python vlans-en-to-cisco.py < config.txt`
 import re, sys
 
+print("Paste the Enterasys config file below, then press Ctrl+D...")
 oldVlanConfig = sys.stdin.readlines()
 print()
 
 vlanTagRegex = re.compile(
-    r'set vlan name (?P<tag>\d{1,4}\b) "(?P<name>[\w\-]+\b)"')
+    r'set vlan name (?P<tag>\d{1,4}\b) "(?P<name>[\w\-\(\) ]+\b)"')
 vlanCreateRegex = re.compile(
     r"set vlan create (?P<tag>\d{1,4}\b)")
 vlanList = []
@@ -23,7 +24,10 @@ for line in oldVlanConfig:
 for i in vlanList:
     print("vlan", i)
     if (name := vlanDict.get(i)) is not None:
-        print(" name", name)
+        if " " in name:
+            print(' name "', name, '"', sep="")
+        else:
+            print(' name', name)
 
 print()
 print("VLAN tag list:")
