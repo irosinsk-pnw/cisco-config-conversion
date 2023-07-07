@@ -3,6 +3,7 @@
 # or redirect it like `python ports-ex-to-cisco.py < config.txt`
 import sys, re
 
+print("Paste the Extreme config file below, then press Ctrl+D...")
 originalConfig = sys.stdin.readlines()
 print()
 
@@ -13,7 +14,7 @@ tagged = {}     # Array of each port's tagged VLANs
 
 # Matches lines adding a description string for ports up to port 48 (excludes fiber ports)
 displayStringRegex = re.compile(
-    r'configure ports (?P<port>\d:((\d\b)|([1-3]\d\b)|(4[0-8]\b))) description-string "(?P<alias>[\w\-]+\b)"')
+    r'configure ports (?P<port>(\d:)?((\d\b)|([1-3]\d\b)|(4[0-8]\b))) description-string "(?P<alias>[\w\-]+\b)"')
 
 # Matches lines giving a VLAN a tag number
 vlanTagRegex = re.compile(
@@ -21,7 +22,7 @@ vlanTagRegex = re.compile(
 
 # Matches lines adding a port or range of ports to a VLAN
 vlanPortRegex = re.compile(
-    r"configure vlan (?P<name>[\w\-]+\b) add ports (?P<ports>(\d:(\d\d?)(-\d\d?)?,)*\d:(\d\d?)(-\d\d?)?\b) (?P<tagged>(untagged)|(tagged)\b)")
+    r"configure vlan (?P<name>[\w\-]+\b) add ports (?P<ports>((\d:)?(\d\d?)(-\d\d?)?,)*(\d:)?(\d\d?)(-\d\d?)?\b) (?P<tagged>(untagged)|(tagged)\b)")
 
 def port_range_to_list(portString):
     """Converts a port range, like "1:3-14,2:4,2:6-10", into a list of individual port strings."""
@@ -33,7 +34,10 @@ def port_range_to_list(portString):
             rangeStart = int(string[string.find(":")+1 : string.find("-")])
             rangeEnd = int(string[string.find("-")+1 : len(string)])
             for i in range(rangeStart, rangeEnd+1):
-                output.append(string[0:string.find(":")] + ":" + str(i))
+                if ":" in string:
+                    output.append(string[0:string.find(":")] + ":" + str(i))
+                else:
+                    output.append(str(i))
 
         else:
             output.append(string)
@@ -65,7 +69,12 @@ for line in originalConfig:
 
 # Print the new configuration
 for port in aliases:
-    (switch, dummy, portNum) = port.partition(":")
+    if ":" in port:
+        (switch, dummy, portNum) = port.partition(":")
+    else:
+        switch = "1"
+        portNum = port
+
     print(f"interface GigabitEthernet{switch}/0/{portNum}")
     print(f"  description {aliases[port]}")
     if (vlanTag := vlanTags.get(untagged.get(port))) is not None:

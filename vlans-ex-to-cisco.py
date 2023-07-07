@@ -3,6 +3,7 @@
 # or redirect it like `python vlans-ex-to-cisco.py < config.txt`
 import re, sys
 
+print("Paste the Extreme config file below, then press Ctrl+D...")
 oldVlanConfig = sys.stdin.readlines()
 print()
 
