@@ -34,7 +34,7 @@ vlanPortRegex = re.compile(
 
 # Matches lines adding a name for a VLAN
 vlanNameRegex = re.compile(
-    r'set vlan name (?P<vlan>\d{1,4}\b) "(?P<name>[\w\-\(\) ]+\b)"')
+    r'set vlan name (?P<vlan>\d{1,4}\b) "(?P<name>.+\b)"')
 
 # Matches lines setting egress on a port
 vlanUntaggedRegex = re.compile(

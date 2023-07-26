@@ -30,11 +30,11 @@ displayStringRegex = re.compile(
 
 # Matches lines giving a VLAN a tag number
 vlanTagRegex = re.compile(
-    r"configure vlan (?P<name>[\w\-]+\b) tag (?P<tag>\d{1,4}\b)")
+    r"configure vlan (?P<name>.+\b) tag (?P<tag>\d{1,4}\b)")
 
 # Matches lines adding a port or range of ports to a VLAN
 vlanPortRegex = re.compile(
-    r"configure vlan (?P<name>[\w\-]+\b) add ports (?P<ports>(\d:(\d\d?)(-\d\d?)?,)*\d:(\d\d?)(-\d\d?)?\b) (?P<tagged>(untagged)|(tagged)\b)")
+    r"configure vlan (?P<name>.+\b) add ports (?P<ports>(\d:(\d\d?)(-\d\d?)?,)*\d:(\d\d?)(-\d\d?)?\b) (?P<tagged>(untagged)|(tagged)\b)")
 
 def port_range_to_list(portString):
     """Converts a port range, like "1:3-14,2:4,2:6-10", into a list of individual port strings."""
