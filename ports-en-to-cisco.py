@@ -1,6 +1,15 @@
 # Takes an Enterasys EOS configuration file and creates a Cisco configuration for each switchport.
 # Input the EOS config by pasting it on the CLI and pressing Ctrl+D at the end,
 # or redirect it like `python ports-ex-to-cisco.py < config.txt`
+#
+# CAUTION: Do not take this output as gospel truth! Check it over manually!
+# Will fill in empty ports with alias "EMPTY" and the Student and VoIP VLANs, if they exist.
+# Assumes that there is only one VoIP and only one Student VLAN. If there are multiple,
+# it will take the last of each as the default.
+# Only configures the first 48 gigabit ports on each switch in the stack. If there are fewer
+# than 48 ports in the original stack, there should be no issue.
+# Assumes that each alias is only used for one port.
+
 import sys, re
 
 print("Paste the Enterasys config file below, then press Ctrl+D...", file=sys.stderr)
@@ -95,6 +104,7 @@ for switch in range(1,numSwitches+1):
         print(f"interface GigabitEthernet{switch}/0/{portNum}")
         print(f"  switchport mode access")
 
+        # If the port is empty
         if (alias := aliases.get(port)) is None:
             print(f"  description \"EMPTY\"")
             if studentVlan != "0":
