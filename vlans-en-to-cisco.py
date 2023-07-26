@@ -3,7 +3,7 @@
 # or redirect it like `python vlans-en-to-cisco.py < config.txt`
 import re, sys
 
-print("Paste the Enterasys config file below, then press Ctrl+D...")
+print("Paste the Enterasys config file below, then press Ctrl+D...", file=sys.stderr)
 oldVlanConfig = sys.stdin.readlines()
 print()
 
