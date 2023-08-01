@@ -14,7 +14,7 @@ import sys, re
 
 print("Paste the Enterasys config file below, then press Ctrl+D...", file=sys.stderr)
 originalConfig = sys.stdin.readlines()
-print()
+print(file=sys.stderr)
 
 aliases = {}    # Display string of each port
 vlanTags = {}   # Tag number of each VLAN
@@ -26,7 +26,7 @@ studentVlan = "0"   # Default VLAN for blank ports
 
 # Matches lines adding an alias for ports up to port 48 (excludes fiber ports)
 displayStringRegex = re.compile(
-    r'set port alias (?P<port>ge\.\d\.((\d\b)|([1-3]\d\b)|(4[0-8]\b))) "(?P<alias>.+\b)"')
+    r'set port alias (?P<port>ge\.\d\.((\d\b)|([1-3]\d\b)|(4[0-8]\b))) "(?P<alias>.+)"')
 
 # Matches lines adding VLAN to a port
 vlanPortRegex = re.compile(
@@ -34,14 +34,14 @@ vlanPortRegex = re.compile(
 
 # Matches lines adding a name for a VLAN
 vlanNameRegex = re.compile(
-    r'set vlan name (?P<vlan>\d{1,4}\b) "(?P<name>.+\b)"')
+    r'set vlan name (?P<vlan>\d{1,4}\b) "(?P<name>.+)"')
 
 # Matches lines setting egress on a port
-vlanUntaggedRegex = re.compile(
-    r"set vlan egress (?P<vlan>\d{1,4}\b) (?P<ports>((ge|tg|lag)\.\d\.\d\d?(-\d\d?)?;)*(ge|tg|lag)\.\d\.\d\d?(-\d\d?)?\b) untagged")
+vlanEgressRegex = re.compile(
+    r"set vlan egress (?P<vlan>\d{1,4}\b) (?P<ports>((ge|tg|lag)\.\d\.\d\d?(-\d\d?)?;)*(ge|tg|lag)\.\d\.\d\d?(-\d\d?)?\b) (?P<tagged>(untagged)|(tagged))")
 
-ciscodpRegex = re.compile(
-    r"set ciscodp port vvid (?P<vlan>\d{1,4}\b) (?P<port>ge\.\d\.((\d\b)|([1-3]\d\b)|(4[0-8]\b)))")
+#ciscodpRegex = re.compile(
+#    r"set ciscodp port vvid (?P<vlan>\d{1,4}\b) (?P<port>ge\.\d\.((\d\b)|([1-3]\d\b)|(4[0-8]\b)))")
 
 def port_range_to_list(portString):
     """Converts a port range, like "ge.2.31-34;ge.3.1;tg.3.50", into a list of individual port strings."""
@@ -78,21 +78,26 @@ for line in originalConfig:
     # Get which ports have which VLANs
     elif (match := vlanPortRegex.match(line)) is not None:
         # Array of tagged ports may not yet exist
-        if (portVlans.get(match["port"]) is None):
+        if portVlans.get(match["port"]) is None:
             portVlans[match["port"]] = [match["vlan"]]
         else:
             portVlans[match["port"]].append(match["vlan"])
 
-    elif (match := vlanUntaggedRegex.match(line)) is not None:
+    elif (match := vlanEgressRegex.match(line)) is not None:
         for port in port_range_to_list(match["ports"]):
-            untagged[port] = match["vlan"]
+            if portVlans.get(port) is None:
+                portVlans[port] = [match["vlan"]]
+            else:
+                portVlans[port].append(match["vlan"])
+            if match["tagged"] == "untagged":
+                untagged[port] = match["vlan"]
 
-    # Get which ports have VoIP VLAN
-    elif (match := ciscodpRegex.match(line)) is not None:
-        if (portVlans.get(match["port"]) is None):
-            portVlans[match["port"]] = [match["vlan"]]
-        else:
-            portVlans[match["port"]].append(match["vlan"])
+#    # Get which ports have VoIP VLAN
+#    elif (match := ciscodpRegex.match(line)) is not None:
+ #       if (portVlans.get(match["port"]) is None):
+  #          portVlans[match["port"]] = [match["vlan"]]
+   #     else:
+    #        portVlans[match["port"]].append(match["vlan"])
 
 
 # Print the new configuration
@@ -120,11 +125,16 @@ for switch in range(1,numSwitches+1):
 
             # Tagged VLANs
             if (vlanList := portVlans.get(port)) is not None:
+                trunkedVlans = ""
                 for vlanTag in vlanList:
-                    if untagged[port] != vlanTag:
+                    if (untagged.get(port) is None) or (untagged[port] != vlanTag):
                         if vlanTag == voipVlan:
                             print(f"  switchport voice vlan {vlanTag}")
                         else:
-                            print(f"  switchport trunk vlan {vlanTag}")
+                            trunkedVlans += (vlanTag+",")
+                if trunkedVlans != "":
+                    if trunkedVlans.endswith(","):
+                        trunkedVlans = trunkedVlans[0:-1]
+                    print(f"  switchport trunk allowed vlan {trunkedVlans}")
 
 print()

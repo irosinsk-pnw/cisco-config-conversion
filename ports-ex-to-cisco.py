@@ -14,7 +14,7 @@ import sys, re
 
 print("Paste the Extreme config file below, then press Ctrl+D...", file=sys.stderr)
 originalConfig = sys.stdin.readlines()
-print()
+print(file=sys.stderr)
 
 aliases = {}    # Display string of each port
 vlanTags = {}   # Tag number of each VLAN
@@ -26,7 +26,7 @@ studentVlan = "0"   # Default VLAN for blank ports
 
 # Matches lines adding a description string for ports up to port 48 (excludes fiber ports)
 displayStringRegex = re.compile(
-    r'configure ports (?P<port>\d:((\d\b)|([1-3]\d\b)|(4[0-8]\b))) description-string "(?P<alias>.+\b)"')
+    r'configure ports (?P<port>(\d:)?((\d\b)|([1-3]\d\b)|(4[0-8]\b))) description-string "(?P<alias>.+)"')
 
 # Matches lines giving a VLAN a tag number
 vlanTagRegex = re.compile(
@@ -34,7 +34,7 @@ vlanTagRegex = re.compile(
 
 # Matches lines adding a port or range of ports to a VLAN
 vlanPortRegex = re.compile(
-    r"configure vlan (?P<name>.+\b) add ports (?P<ports>(\d:(\d\d?)(-\d\d?)?,)*\d:(\d\d?)(-\d\d?)?\b) (?P<tagged>(untagged)|(tagged)\b)")
+    r"configure vlan (?P<name>.+\b) add ports (?P<ports>((\d:)?(\d\d?)(-\d\d?)?,)*(\d:)?(\d\d?)(-\d\d?)?\b) (?P<tagged>(untagged)|(tagged)\b)")
 
 def port_range_to_list(portString):
     """Converts a port range, like "1:3-14,2:4,2:6-10", into a list of individual port strings."""
@@ -69,22 +69,32 @@ for line in originalConfig:
 
     # Get which ports have which VLANs
     elif (match := vlanPortRegex.match(line)) is not None:
-        for port in port_range_to_list(match.group("ports")):
+        if match["name"] != "Default":
+            for port in port_range_to_list(match["ports"]):
 
-            if (match.group("tagged") == "untagged"):
-                untagged[port] = vlanTags[match["name"]]
-            else:
-                # Array of tagged ports may not yet exist
-                if (tagged.get(port) is None):
-                    tagged[port] = [vlanTags[match["name"]]]
+                if match["tagged"] == "untagged":
+                    untagged[port] = vlanTags[match["name"]]
                 else:
-                    tagged[port].append(vlanTags[match["name"]])
+                    # Array of tagged ports may not yet exist
+                    if (tagged.get(port) is None):
+                        tagged[port] = [vlanTags[match["name"]]]
+                    else:
+                        tagged[port].append(vlanTags[match["name"]])
 
 # Print the new configuration
-numSwitches = int(reversed(aliases.keys()).__next__()[0])
+if ":" in (lastPort := reversed(aliases.keys()).__next__()):
+    numSwitches = int(lastPort[0])
+else:
+    numSwitches = 1
+
 for switch in range(1,numSwitches+1):
     for portNum in range(1,49):
-        port = str(switch) + ":" + str(portNum)
+
+        # Stacks of 1 don't use the #:## format for ports
+        if numSwitches == 1:
+            port = str(portNum)
+        else:
+            port = str(switch) + ":" + str(portNum)
 
         print(f"interface GigabitEthernet{switch}/0/{portNum}")
         print(f"  switchport mode access")
@@ -105,10 +115,16 @@ for switch in range(1,numSwitches+1):
 
             # Tagged VLANs
             if (vlanList := tagged.get(port)) is not None:
+                trunkedVlans = ""
                 for vlanTag in vlanList:
-                    if vlanTag == voipVlan:
+                    if vlanTag == voipVlan: # VoIP VLAN gets a special line
                         print(f"  switchport voice vlan {vlanTag}")
-                    else:
-                        print(f"  switchport trunk vlan {vlanTag}")
 
+                    # Trunked VLANs will be in a list, like "3,47,991"
+                    else:
+                        trunkedVlans += (vlanTag+",")
+                if trunkedVlans != "":
+                    if trunkedVlans.endswith(","):
+                        trunkedVlans = trunkedVlans[0:-1]
+                    print(f"  switchport trunk allowed vlan {trunkedVlans}")
 print()

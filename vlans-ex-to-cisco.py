@@ -8,7 +8,7 @@ oldVlanConfig = sys.stdin.readlines()
 print()
 
 vlanTagRegex = re.compile(
-    r"configure vlan (?P<name>[\w\-]+\b) tag (?P<tag>\d{1,4}\b)")
+    r"configure vlan (?P<name>[\w\d\-]+\b) tag (?P<tag>\d{1,4}\b)")
 vlanList = []
 
 for line in oldVlanConfig:
