@@ -9,6 +9,7 @@
 # Only configures the first 48 gigabit ports on each switch in the stack. If there are fewer
 # than 48 ports in the original stack, there should be no issue.
 # Assumes that each alias is only used for one port.
+# Assumes that each switch has at least one port with an alias.
 
 import sys, re
 
@@ -25,8 +26,10 @@ voipVlan = "0"      # VoIP VLAN is handled differently from the rest
 studentVlan = "0"   # Default VLAN for blank ports
 
 # Matches lines adding a description string for ports up to port 48 (excludes fiber ports)
-displayStringRegex = re.compile(
+descriptionStringRegex = re.compile(
     r'configure ports (?P<port>(\d:)?((\d\b)|([1-3]\d\b)|(4[0-8]\b))) description-string "(?P<alias>.+)"')
+displayStringRegex = re.compile(
+    r'configure ports (?P<port>(\d:)?((\d\b)|([1-3]\d\b)|(4[0-8]\b))) display-string (?P<alias>.+)')
 
 # Matches lines giving a VLAN a tag number
 vlanTagRegex = re.compile(
@@ -57,6 +60,10 @@ for line in originalConfig:
 
     # Get port aliases
     if (match := displayStringRegex.match(line)) is not None:
+        if aliases.get(match["port"]) is None:  # "description-string" overrules "display-string"
+            aliases[match["port"]] = match["alias"]
+
+    elif (match := descriptionStringRegex.match(line)) is not None:
         aliases[match["port"]] = match["alias"]
 
     # Get VLAN tag numbers
@@ -101,13 +108,13 @@ for switch in range(1,numSwitches+1):
 
         # If the port is empty
         if (alias := aliases.get(port)) is None:
-            print(f"  description \"EMPTY\"")
+            print(f"  description EMPTY")
             if studentVlan != "0":
                 print(f"  switchport access vlan {studentVlan}")
             if voipVlan != "0":
                 print(f"  switchport voice vlan {voipVlan}")
         else:
-            print(f"  description \"{alias}\"")
+            print(f"  description {alias}")
 
             # Untagged VLAN
             if (vlanTag := untagged.get(port)) is not None:

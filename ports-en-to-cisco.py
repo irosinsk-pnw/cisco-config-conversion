@@ -111,13 +111,13 @@ for switch in range(1,numSwitches+1):
 
         # If the port is empty
         if (alias := aliases.get(port)) is None:
-            print(f"  description \"EMPTY\"")
+            print(f"  description EMPTY")
             if studentVlan != "0":
                 print(f"  switchport access vlan {studentVlan}")
             if voipVlan != "0":
                 print(f"  switchport voice vlan {voipVlan}")
         else:
-            print(f"  description \"{alias}\"")
+            print(f"  description {alias}")
 
             # Untagged VLAN
             if (vlanTag := untagged.get(port)) is not None:
