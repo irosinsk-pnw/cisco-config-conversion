@@ -1,4 +1,5 @@
 # Takes an Enterasys EOS configuration file and creates a Cisco configuration for each switchport.
+#
 # Input the EOS config by pasting it on the CLI and pressing Ctrl+D at the end,
 # or redirect it like `python ports-ex-to-cisco.py < config.txt`
 #
@@ -10,7 +11,13 @@
 # than 48 ports in the original stack, there should be no issue.
 # Assumes that each alias is only used for one port.
 
-import sys, re
+import sys, re, argparse
+
+# Allows manual specification of default and VoIP VLANs
+parser = argparse.ArgumentParser()
+parser.add_argument("-d", "--default", type=int, help="Default VLAN for empty ports")
+parser.add_argument("-v", "--voip", type=int, help="VoIP VLAN")
+args = parser.parse_args()
 
 class Port:
     """Represents one port's configuration."""
@@ -53,8 +60,8 @@ print(file=sys.stderr)
 ports = {}      # Dictionary of port-string : Port object
 vlanTags = {}   # Tag number of each VLAN
 
-voipVlan = 0      # VoIP VLAN is handled differently from the rest
-studentVlan = 0   # Default VLAN for blank ports
+voipVlan = args.voip if args.voip else 0            # VoIP VLAN gets a different config line
+studentVlan = args.default if args.default else 0   # Default VLAN for blank ports
 
 # Matches lines adding an alias for ports up to port 48 (excludes fiber ports)
 displayStringRegex = re.compile(
@@ -103,7 +110,7 @@ for line in originalConfig:
 
 
 # Print the new configuration
-numSwitches = len(ports)//48
+numSwitches = len(ports)//48 if len(ports) > 48 else 1
 
 for switch in range(1,numSwitches+1):
     for portNum in range(1,49):

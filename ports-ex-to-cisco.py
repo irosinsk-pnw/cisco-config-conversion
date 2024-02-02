@@ -11,7 +11,13 @@
 # Assumes that each alias is only used for one port.
 # Assumes that each switch has at least one port with an alias.
 
-import sys, re
+import sys, re, argparse
+
+# Allows manual specification of default and VoIP VLANs
+parser = argparse.ArgumentParser()
+parser.add_argument("-d", "--default", type=int, help="Default VLAN for empty ports")
+parser.add_argument("-v", "--voip", type=int, help="VoIP VLAN")
+args = parser.parse_args()
 
 class Port:
     """Represents one port's configuration."""
@@ -62,8 +68,9 @@ print(file=sys.stderr)
 ports = {}      # Dictionary of port-string : Port object
 vlanTags = {}   # Tag number of each VLAN
 
-voipVlan = 0      # VoIP VLAN is handled differently from the rest
-studentVlan = 0   # Default VLAN for blank ports
+
+voipVlan = args.voip if args.voip else 0            # VoIP VLAN gets a different config line
+studentVlan = args.default if args.default else 0   # Default VLAN for blank ports
 
 # Matches lines adding a description string for ports up to port 48 (excludes fiber ports)
 descriptionStringRegex = re.compile(
@@ -99,7 +106,6 @@ for line in originalConfig:
 
 
     elif match := descriptionStringRegex.match(line):
-
         portString = match["port"]
         if (":" not in portString and int(portString) > 48) \
         or (":" in portString and int(portString[2:]) > 48):  # Skip fiber ports
@@ -134,7 +140,8 @@ for line in originalConfig:
                     port = ports.get(portString)
 
                 if match["tagged"] == "untagged":
-                    port.untagged = vlanTags[match["name"]]
+                    if not match["name"] == "nt_login":
+                        port.untagged = vlanTags[match["name"]]
                 elif vlanTags[match["name"]] == voipVlan:
                     port.voip = True
                 else:
