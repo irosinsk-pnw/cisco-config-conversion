@@ -9,6 +9,7 @@ brand.add_argument("-X", "--extreme", action="store_true", help="Use an Extreme 
 
 parser.add_argument("--vlans", action="store_true", help="Print VLAN configuration. Omit for port configuration")
 
+parser.add_argument("--k6", action="store_true", help="Source switch is an Enterasys K6 chassis")
 model = parser.add_mutually_exclusive_group()
 model.add_argument("-w", "--white", action="store_true", help="Destination switch is 'white' (9348uxm)")
 model.add_argument("-b", "--blue", action="store_true", help="Destination switch is 'blue' (3850mg)")
@@ -70,7 +71,7 @@ else:
     if args.extreme:
         portsDict = ports_extreme.parse_config(config, voipVlan)
     else: # if args.enterasys
-        portsDict = ports_enterasys.parse_config(config, voipVlan)
+        portsDict = ports_enterasys.parse_config(config, voipVlan, args.k6)
 
     numSwitches = list(portsDict)[-1][0]
 
