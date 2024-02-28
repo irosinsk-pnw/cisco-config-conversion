@@ -73,7 +73,7 @@ else:
     else: # if args.enterasys
         portsDict = ports_enterasys.parse_config(config, voipVlan, args.k6)
 
-    numSwitches = list(portsDict)[-1][0]
+    numSwitches = max(portsDict)[0]
 
     for switch in range(1,numSwitches+1):
         for portNum in range(1,49):

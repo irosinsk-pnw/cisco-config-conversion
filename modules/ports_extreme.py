@@ -110,7 +110,7 @@ def parse_config(config: list[str], voipVlan: int = 0) -> dict[PortNum, Port]:
                     else:
                         port.tagged.append(vlanTags[match["name"]])
 
-    return dict(sorted(ports.items()))
+    return ports
 
 
 if __name__ == "__main__":

@@ -90,4 +90,4 @@ def parse_config(config: list[str], voipVlan: int = 0, k6: bool = False) -> dict
     if k6:
         ports = _collapse_k6(ports)
 
-    return dict(sorted(ports.items()))
+    return ports
