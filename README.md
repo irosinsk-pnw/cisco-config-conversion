@@ -4,7 +4,7 @@ This script will generate VLAN or interface configurations for a Cisco switch, b
 
 ## Usage
 
-Command line: `cisco_conversion.py [-h] (-E | -X) [--vlans] [-w | -b] [-d DEFAULT] [-v VOIP] [filename]`
+Command line: `cisco_conversion.py [-h] (-E | -X) [--vlans] [--k6] [-w | -b] [-d DEFAULT] [-v VOIP] [filename]`
 
 ### Arguments
 
