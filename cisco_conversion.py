@@ -89,6 +89,7 @@ else:
             if not port or not port.alias: # Print a default config
                 print(" description EMPTY")
                 print(" switchport mode access")
+                print(" spanning-tree portfast")
                 if defaultVlan and (not port or not port.untagged):
                     print(f" switchport access vlan {defaultVlan}")
                 elif port and port.untagged:
@@ -109,6 +110,7 @@ else:
 
                 else:
                     print(" switchport mode access")
+                    print(" spanning-tree portfast")
 
                 if port.untagged:
                     print(f" switchport access vlan {port.untagged}")
