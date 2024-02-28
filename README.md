@@ -20,6 +20,10 @@ Specifies whether the input configuration file is from an Enterasys switch or an
 Generates the VLAN configuration section. If this option is not present, will generate the interface configuration section.  
 See Output for more information.
 
+`--k6`:  
+If generating an interface configuration for an Enterasys switch, the script will assume the original config has six 24-port switches that are being converted into three 48-port switches.  
+Switches 1 and 2 are combined into new switch 1, 3 and 4 are combined into new switch 2, and so on.
+
 `-b`, `--blue`  
 `-w`, `--white`:  
 These options control the interface configuration output, allowing the generated configuration to be used on a "blue" 3850-multigig, with the last 12 ports being ten-gigabit, or a "white" 9348, with the first 36 being two-gigabit and the last 12 being ten-gigabit.  
