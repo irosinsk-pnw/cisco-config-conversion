@@ -40,7 +40,8 @@ def print_vlans(config: list[str], brand: str):
         vlans = _get_vlans_extreme(config)
     else:
         raise ValueError("Brand must be 'e' for enterasys or 'x' for extreme")
-
+    
+    vlans = dict(sorted(vlans.items()))
     for tag in vlans:
         print(f"vlan {tag}")
         if vlans[tag] != "":
