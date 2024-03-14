@@ -140,7 +140,7 @@ def parse_config(config: list[str], voipVlan: int = 0) -> dict[PortNum, Port]:
                 port = ports[portNum] = Port()
             port.fa = int(match["num"])
 
-    return dict(sorted(ports.items()))
+    return ports
 
 
 if __name__ == "__main__":

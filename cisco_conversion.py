@@ -9,9 +9,10 @@ brand.add_argument("-X", "--extreme", action="store_true", help="Use an Extreme 
 
 parser.add_argument("--vlans", action="store_true", help="Print VLAN configuration. Omit for port configuration")
 
+parser.add_argument("--k6", action="store_true", help="Source switch is an Enterasys K6 chassis")
 model = parser.add_mutually_exclusive_group()
-model.add_argument("-w", "--white", action="store_true", help="Destination switch is 'white' (9348uxm)")
-model.add_argument("-b", "--blue", action="store_true", help="Destination switch is 'blue' (3850mg)")
+model.add_argument("--uxm", action="store_true", help="Destination switch is a 9348uxm")
+model.add_argument("--mg", action="store_true", help="Destination switch is a 3850mg")
 
 parser.add_argument("-d", "--default", type=int, help="Default VLAN for empty ports")
 parser.add_argument("-v", "--voip", type=int, help="VoIP VLAN")
@@ -70,16 +71,16 @@ else:
     if args.extreme:
         portsDict = ports_extreme.parse_config(config, voipVlan)
     else: # if args.enterasys
-        portsDict = ports_enterasys.parse_config(config, voipVlan)
+        portsDict = ports_enterasys.parse_config(config, voipVlan, args.k6)
 
-    numSwitches = list(portsDict)[-1][0]
+    numSwitches = max(portsDict)[0]
 
     for switch in range(1,numSwitches+1):
         for portNum in range(1,49):
 
-            if args.white and portNum <= 36:
+            if args.uxm and portNum <= 36:
                 print(f"interface TwoGigabitEthernet{switch}/0/{portNum}")
-            elif (args.blue or args.white) and portNum > 36:
+            elif (args.mg or args.uxm) and portNum > 36:
                 print(f"interface TenGigabitEthernet{switch}/0/{portNum}")
             else:
                 print(f"interface GigabitEthernet{switch}/0/{portNum}")

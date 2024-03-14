@@ -4,7 +4,7 @@ This script will generate VLAN or interface configurations for a Cisco switch, b
 
 ## Usage
 
-Command line: `cisco_conversion.py [-h] (-E | -X) [--vlans] [-w | -b] [-d DEFAULT] [-v VOIP] [filename]`
+Command line: `cisco_conversion.py [-h] (-E | -X) [--vlans] [--k6] [--uxm | --mg] [-d DEFAULT] [-v VOIP] [filename]`
 
 ### Arguments
 
@@ -20,10 +20,14 @@ Specifies whether the input configuration file is from an Enterasys switch or an
 Generates the VLAN configuration section. If this option is not present, will generate the interface configuration section.  
 See Output for more information.
 
-`-b`, `--blue`  
-`-w`, `--white`:  
-These options control the interface configuration output, allowing the generated configuration to be used on a "blue" 3850-multigig, with the last 12 ports being ten-gigabit, or a "white" 9348, with the first 36 being two-gigabit and the last 12 being ten-gigabit.  
-You may specify one of these options, or neither. If neither is specified, the output will have all ports at one-gigabit. See Output for more information.
+`--k6`:  
+If generating an interface configuration for an Enterasys switch, the script will assume the original config has six 24-port switches that are being converted into three 48-port switches.  
+Switches 1 and 2 are combined into new switch 1, 3 and 4 are combined into new switch 2, and so on.
+
+`--mg`  
+`--uxm`:  
+These options control the interface configuration output, allowing the generated configuration to be used on a 3850-multigig, with the last 12 ports being ten-gigabit, or a 9300-48UXM, with the first 36 being two-gigabit and the last 12 being ten-gigabit.  
+You may specify one of these options, or neither. If neither is specified, the output will have all ports at one-gigabit. See Output for more information.  
 
 `-d [DEFAULT]`, `--default [DEFAULT]`:  
 This option allows you to manually specify a default VLAN number, which will be used on ports that have no configuration. Usually, this is the number of the Student VLAN.  
@@ -55,7 +59,7 @@ Example:
      name NIMM
     vlan 2911
      name VoIP
-    
+
     VLAN tag list:
     2,172,2911
 
@@ -68,8 +72,8 @@ If you do not specify the `--vlans` option, the script will print out an interfa
      switchport voice vlan 2911
 
 The script will automatically determine the description and VLANs, whether there are any trunked VLANs, and whether there is a voice VLAN, all based on the input configuration.  
-If the option `--blue` is specified, the last 12 ports of each switch will be TenGigabitEthernet, rather than GigabitEthernet, to match a c3850mg.  
-If the option `--white` is specified, the first 36 ports of each switch will be TwoGigabitEthernet and the last 12 will be TenGigabitEthernet, to match a c9348uxm.
+If the option `--mg` is specified, the last 12 ports of each switch will be TenGigabitEthernet, rather than GigabitEthernet, to match a c3850mg.  
+If the option `--uxm` is specified, the first 36 ports of each switch will be TwoGigabitEthernet and the last 12 will be TenGigabitEthernet, to match a c9348uxm.  
 
 ## Credits
 
