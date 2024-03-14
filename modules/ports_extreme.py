@@ -62,6 +62,16 @@ def parse_config(config: list[str], voipVlan: int = 0) -> dict[PortNum, Port]:
     vlanPortRegex = re.compile(
         r"configure vlan (?P<name>.+\b) add ports (?P<ports>((\d:)?(\d\d?)(-\d\d?)?,)*(\d:)?(\d\d?)(-\d\d?)?\b) (?P<tagged>(untagged)|(tagged)\b)")
 
+    # Matches lines enabling MAC locking on a port.
+    maclockEnableRegex = re.compile(
+        r"enable mac-locking ports (?P<port>(\d:)?((\d\b)|([1-3]\d\b)|(4[0-8]\b)))")
+
+    # Matches lines setting a maximum first-arrival for a port.
+    maclockFARegex = re.compile(
+        r"configure mac-locking ports (?P<port>(\d:)?((\d\b)|([1-3]\d\b)|(4[0-8]\b))) first-arrival limit-learning (?P<num>\d+)")
+
+    # TODO: Figure out how Extreme does static-assigned MAC locks.
+
 
     for line in config:
 
@@ -92,7 +102,7 @@ def parse_config(config: list[str], voipVlan: int = 0) -> dict[PortNum, Port]:
 
 
         # Get which ports have which VLANs
-        elif (match := vlanPortRegex.match(line)) is not None:
+        elif match := vlanPortRegex.match(line):
             if match["name"] not in ["Default", "nt_login"]:
                 for portNum in _port_range_to_list(match["ports"]):
 
@@ -109,6 +119,26 @@ def parse_config(config: list[str], voipVlan: int = 0) -> dict[PortNum, Port]:
                         port.voip = True
                     else:
                         port.tagged.append(vlanTags[match["name"]])
+
+        elif match := maclockEnableRegex.match(line):
+            portNum = _string_to_tuple(match["port"])
+            if portNum[1] > 48:
+                continue
+
+            port = ports.get(portNum)
+            if not port:
+                port = ports[portNum] = Port()
+            port.maclock = True
+
+        elif match := maclockFARegex.match(line):
+            portNum = _string_to_tuple(match["port"])
+            if portNum[1] > 48:
+                continue
+
+            port = ports.get(portNum)
+            if not port:
+                port = ports[portNum] = Port()
+            port.fa = int(match["num"])
 
     return dict(sorted(ports.items()))
 

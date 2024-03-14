@@ -90,6 +90,9 @@ else:
                 print(" description EMPTY")
                 print(" switchport mode access")
                 print(" spanning-tree portfast")
+                print(" switchport port-security")
+                print(" switchport port-security maximum 8")
+                print(" switchport port-security violation restrict")
                 if defaultVlan and (not port or not port.untagged):
                     print(f" switchport access vlan {defaultVlan}")
                 elif port and port.untagged:
@@ -117,6 +120,13 @@ else:
 
                 if port.voip:
                     print(f" switchport voice vlan {voipVlan}")
+
+                if port.maclock:
+                    print(" switchport port-security")
+                    print(f" switchport port-security maximum {port.fa}")
+                    print(" switchport port-security violation restrict")
+                    for mac in port.macs:
+                        print(f" switchport port-security mac-address {mac}")
 
 
 
